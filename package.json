@@ -50,10 +50,7 @@
         "dmg",
         "zip"
       ],
-      "icon": "assets/cassette.icns",
-      "forceCodeSigning": false,
-      "hardenedRuntime": false,
-      "gatekeeperAssess": false
+      "icon": "assets/cassette.icns"
     },
     "dmg": {
       "artifactName": "Cassetto.dmg"

@@ -74,18 +74,20 @@ jobs:
     name: Publish GitHub Release (v1.0.0)
     needs: [build-windows, build-mac]
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request'
+    if: always() && (needs.build-windows.result == 'success' || needs.build-mac.result == 'success') && github.event_name != 'pull_request'
     permissions:
       contents: write
 
     steps:
       - name: Download Windows Artifact
+        if: needs.build-windows.result == 'success'
         uses: actions/download-artifact@v4
         with:
           name: Cassetto-Windows-x64
           path: release-files/windows
 
       - name: Download macOS Artifact
+        if: needs.build-mac.result == 'success'
         uses: actions/download-artifact@v4
         with:
           name: Cassetto-macOS-Universal
