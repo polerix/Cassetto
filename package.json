@@ -50,7 +50,8 @@
         "dmg",
         "zip"
       ],
-      "icon": "assets/Cassetto.png"
+      "icon": "assets/Cassetto.png",
+      "artifactName": "${productName}.${ext}"
     },
     "dmg": {
       "artifactName": "Cassetto.dmg"
