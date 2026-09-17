@@ -33,7 +33,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Cassetto-Windows-x64
-          path: dist/*
+          path: |
+            dist/*.exe
+          if-no-files-found: warn
 
   build-mac:
     name: Build macOS Release (.dmg & .zip)
@@ -59,7 +61,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Cassetto-macOS-Universal
-          path: dist/*.dmg
+          path: |
+            dist/*.dmg
+            dist/*.zip
+          if-no-files-found: warn
 
   release:
     name: Publish GitHub Release (v1.0.0)
@@ -93,8 +98,8 @@ jobs:
             High-Fidelity Uncompressed WAV Recording Suite for Windows & macOS.
 
             ### Downloads Included:
-            - **Windows Desktop & Portable Executable**: `Cassetto.exe` / `Cassetto.zip`
-            - **macOS Application Package**: `Cassetto.dmg`
+            - **Windows Standalone Portable Executable**: `Cassetto.exe`
+            - **macOS Disk Image Installer**: `Cassetto.dmg`
 
             ### Features:
             - 5 Full Interface Themes (Classic Win95, Luxury Wood, 80s Cyberpunk, Hi-Fi Studio, Clear Skeleton)
@@ -104,8 +109,8 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            release-files/windows/Cassetto.zip
-            release-files/windows/win-unpacked/Cassetto.exe
+            release-files/windows/*.exe
             release-files/mac/*.dmg
+            release-files/mac/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
