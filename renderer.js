@@ -58,6 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let mediaStream = null;
   let sourceNode = null;
   let scriptProcessor = null;
+  let workletNode = null;
   let analyserL = null;
   let analyserR = null;
   let splitter = null;
@@ -193,28 +194,59 @@ document.addEventListener('DOMContentLoaded', () => {
         splitter.connect(analyserR, 0); // Duplicate left if mono source
       }
 
-      // ScriptProcessor for PCM capture (4096 buffer size)
-      const bufferSize = 4096;
-      scriptProcessor = audioContext.createScriptProcessor(bufferSize, 2, 2);
+      // PCM Capture: AudioWorklet preferred, with graceful ScriptProcessor fallback
+      let useWorklet = false;
+      if (audioContext.audioWorklet) {
+        try {
+          await audioContext.audioWorklet.addModule('pcm-capture-processor.js');
+          workletNode = new AudioWorkletNode(audioContext, 'pcm-capture-processor', {
+            numberOfInputs: 1,
+            numberOfOutputs: 1,
+            channelCount: 2
+          });
 
-      scriptProcessor.onaudioprocess = (e) => {
-        if (recordingState !== 'recording') return;
+          workletNode.port.onmessage = (e) => {
+            if (recordingState !== 'recording') return;
+            const { left, right } = e.data;
+            if (left) {
+              leftPcmChunks.push(left);
+              totalSamplesRecorded += left.length;
+            }
+            if (isChannelStereo) {
+              rightPcmChunks.push(right || left);
+            }
+          };
 
-        const left = e.inputBuffer.getChannelData(0);
-        const right = isChannelStereo && e.inputBuffer.numberOfChannels > 1
-          ? e.inputBuffer.getChannelData(1)
-          : left;
-
-        // Copy array buffers
-        leftPcmChunks.push(new Float32Array(left));
-        if (isChannelStereo) {
-          rightPcmChunks.push(new Float32Array(right));
+          sourceNode.connect(workletNode);
+          workletNode.connect(audioContext.destination);
+          useWorklet = true;
+        } catch (workletErr) {
+          console.warn('AudioWorklet failed to initialize; using ScriptProcessor fallback:', workletErr);
         }
-        totalSamplesRecorded += left.length;
-      };
+      }
 
-      sourceNode.connect(scriptProcessor);
-      scriptProcessor.connect(audioContext.destination);
+      if (!useWorklet) {
+        const bufferSize = 4096;
+        scriptProcessor = audioContext.createScriptProcessor(bufferSize, 2, 2);
+
+        scriptProcessor.onaudioprocess = (e) => {
+          if (recordingState !== 'recording') return;
+
+          const left = e.inputBuffer.getChannelData(0);
+          const right = isChannelStereo && e.inputBuffer.numberOfChannels > 1
+            ? e.inputBuffer.getChannelData(1)
+            : left;
+
+          leftPcmChunks.push(new Float32Array(left));
+          if (isChannelStereo) {
+            rightPcmChunks.push(new Float32Array(right));
+          }
+          totalSamplesRecorded += left.length;
+        };
+
+        sourceNode.connect(scriptProcessor);
+        scriptProcessor.connect(audioContext.destination);
+      }
 
       recordingState = 'recording';
       startTimer();
@@ -274,7 +306,19 @@ document.addEventListener('DOMContentLoaded', () => {
     lcdStatus.textContent = '■ STOPPED';
     lcdStatus.className = 'lcd-badge status-idle';
 
-    if (scriptProcessor) scriptProcessor.disconnect();
+    if (workletNode) {
+      try {
+        workletNode.port.postMessage({ command: 'setRecording', recording: false });
+        workletNode.disconnect();
+      } catch (e) {
+        console.warn('Error disconnecting workletNode:', e);
+      }
+      workletNode = null;
+    }
+    if (scriptProcessor) {
+      scriptProcessor.disconnect();
+      scriptProcessor = null;
+    }
     if (sourceNode) sourceNode.disconnect();
     if (mediaStream) mediaStream.getTracks().forEach(track => track.stop());
 
