@@ -441,14 +441,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const buffer = await recordedAudioBlob.arrayBuffer();
       const defaultName = `Cassetto_${getTimestampStr()}.wav`;
 
-      const result = await window.cassettoAPI.saveWavFile(buffer, defaultName);
-      if (result.success) {
-        lastSavedFilePath = result.filePath;
-        statusText.textContent = `Saved: ${result.filePath}`;
-        showModal('File Saved', `Audio successfully saved to:\n${result.filePath}`);
+      if (window.cassettoAPI && window.cassettoAPI.saveWavFile) {
+        const buffer = await recordedAudioBlob.arrayBuffer();
+        const result = await window.cassettoAPI.saveWavFile(buffer, defaultName);
+        if (result.success) {
+          lastSavedFilePath = result.filePath;
+          statusText.textContent = `Saved: ${result.filePath}`;
+          showModal('File Saved', `Audio successfully saved to:\n${result.filePath}`);
+        }
+      } else {
+        // Web Browser Download fallback
+        const a = document.createElement('a');
+        a.href = recordedAudioUrl;
+        a.download = defaultName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        statusText.textContent = `Downloaded: ${defaultName}`;
+        showModal('File Downloaded', `Audio WAV file downloaded as:<br><strong>${defaultName}</strong>`);
       }
     } catch (err) {
       console.error('Save error:', err);
@@ -496,8 +508,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key.toLowerCase() === 's' && !btnStop.disabled) stopRecording();
   });
 
-  // --- Desktop Shortcut & Permissions ---
+  const isElectron = !!(window.cassettoAPI);
+
+  // --- Desktop Shortcut & Desktop App Download ---
   async function checkDesktopShortcutStatus() {
+    if (!isElectron) {
+      statusShortcut.textContent = '💻 Desktop App Available';
+      statusShortcut.title = 'Running in web mode. Click to download Desktop Portable Executable.';
+      statusShortcut.style.cursor = 'pointer';
+      statusShortcut.addEventListener('click', promptDesktopDownload);
+      return;
+    }
     try {
       const exists = await window.cassettoAPI.checkDesktopShortcut();
       updateShortcutStatus(exists);
@@ -506,7 +527,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  async function createDesktopShortcut() {
+  function promptDesktopDownload() {
+    showModal(
+      'Download Cassetto Desktop',
+      `<h3>Cassetto Portable Desktop Edition</h3>
+      <p>Download the standalone Windows executable for offline high-fidelity WAV recording without a browser.</p>
+      <br>
+      <p>• 100% Offline Single Executable (.exe)</p>
+      <p>• Native File Dialogs & Windows Integration</p>
+      <p>• No Admin Privileges or Installation Required</p>
+      <br>
+      <p><a href="https://github.com/polerix/Cassetto/releases/latest" target="_blank" style="color: inherit; font-weight: bold; text-decoration: underline;">📦 Download Portable Cassetto (.exe) from GitHub Releases</a></p>`
+    );
+  }
+
+  async function handleShortcutOrDownload() {
+    if (!isElectron) {
+      promptDesktopDownload();
+      return;
+    }
     try {
       const result = await window.cassettoAPI.createDesktopShortcut();
       if (result.success) {
@@ -521,6 +560,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateShortcutStatus(exists) {
+    if (!isElectron) {
+      statusShortcut.textContent = '💻 Desktop App Available';
+      statusShortcut.title = 'Running in web mode. Click to download Desktop Portable Executable.';
+      return;
+    }
     if (exists) {
       statusShortcut.textContent = '📌 Shortcut: Active';
       statusShortcut.title = 'Desktop shortcut is installed';
@@ -532,6 +576,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Window Frame Controls ---
   function initWindowControls() {
+    if (!isElectron) {
+      if (btnMinimize) btnMinimize.style.display = 'none';
+      if (btnMaximize) btnMaximize.style.display = 'none';
+      if (btnClose) btnClose.style.display = 'none';
+      return;
+    }
     btnMinimize.addEventListener('click', () => window.cassettoAPI.minimizeWindow());
     btnMaximize.addEventListener('click', () => window.cassettoAPI.maximizeWindow());
     btnClose.addEventListener('click', () => window.cassettoAPI.closeWindow());
@@ -560,17 +610,31 @@ document.addEventListener('DOMContentLoaded', () => {
       menus.forEach(m => m.trigger.classList.remove('active'));
     }
 
+    if (!isElectron) {
+      if (optCreateShortcut) optCreateShortcut.innerHTML = '💻 Download Desktop App (.exe)';
+    }
+
     // Options Menu Actions
     optSave.addEventListener('click', saveWavFile);
     optOpenFolder.addEventListener('click', () => {
+      if (!isElectron) {
+        showModal('Open Folder', 'In web mode, saved recordings are automatically downloaded to your browser Downloads folder.');
+        return;
+      }
       if (lastSavedFilePath) {
         window.cassettoAPI.showInFolder(lastSavedFilePath);
       } else {
         showModal('Open Folder', 'No file has been saved yet in this session.');
       }
     });
-    optExit.addEventListener('click', () => window.cassettoAPI.closeWindow());
-    optCreateShortcut.addEventListener('click', createDesktopShortcut);
+    optExit.addEventListener('click', () => {
+      if (!isElectron) {
+        showModal('Exit Cassetto', 'Thank you for using Cassetto Web Edition. You can close this browser tab anytime.');
+        return;
+      }
+      window.cassettoAPI.closeWindow();
+    });
+    optCreateShortcut.addEventListener('click', handleShortcutOrDownload);
 
     optAudioStereo.addEventListener('click', () => {
       isChannelStereo = true;
