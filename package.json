@@ -47,10 +47,10 @@
     "mac": {
       "category": "public.app-category.music",
       "target": [
-        "zip",
-        "dmg"
+        "dmg",
+        "zip"
       ],
-      "icon": "assets/cassette.icns"
+      "icon": "assets/Cassetto.png"
     },
     "dmg": {
       "artifactName": "Cassetto.dmg"

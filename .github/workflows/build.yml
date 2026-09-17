@@ -58,7 +58,11 @@ jobs:
 
       - name: Build macOS Package
         run: |
-          npm run build:mac || npx electron-builder --mac zip
+          npm run build:mac 2>&1 | tee mac-build.log || {
+            echo "=== BUILD:MAC FAILED, RETRYING WITH ZIP ONLY ==="
+            cat mac-build.log
+            npx electron-builder --mac -c.mac.target=zip
+          }
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
@@ -92,29 +96,17 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          FILES=$(find release-files -type f \( -name "*.exe" -o -name "*.dmg" -o -name "*.zip" \))
-          echo "Files to upload:"
-          echo "$FILES"
+          set -e
+          echo "Listing downloaded files in release-files:"
+          find release-files -type f
 
-          if ! gh release view v1.0.0 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release create v1.0.0 \
-              --title "Cassetto v1.0.0 (Windows & macOS)" \
-              --notes "## 📼 Cassetto Audio Recorder v1.0.0
-          High-Fidelity Uncompressed WAV Recording Suite for Windows & macOS.
-
-          ### Downloads Included:
-          - **Windows Standalone Portable Executable**: \`Cassetto.exe\`
-          - **macOS Disk Image Installer**: \`Cassetto.dmg\`
-
-          ### Features:
-          - 5 Full Interface Themes (Classic Win95, Luxury Wood, 80s Cyberpunk, Hi-Fi Studio, Clear Skeleton)
-          - 16-Bit PCM 44.1kHz Stereo/Mono WAV Export
-          - Real-Time Dual Channel LED Peak VU Meter
-          - Spinning Cassette Tape Spool Visualizer" \
-              --repo "$GITHUB_REPOSITORY"
+          mapfile -t ASSETS < <(find release-files -type f \( -name "*.exe" -o -name "*.dmg" -o -name "*.zip" \))
+          if [ ${#ASSETS[@]} -eq 0 ]; then
+            echo "No binary assets found to release!"
+            exit 1
           fi
 
-          for file in $FILES; do
-            echo "Uploading $file..."
-            gh release upload v1.0.0 "$file" --clobber --repo "$GITHUB_REPOSITORY"
-          done
+          echo "Found ${#ASSETS[@]} asset(s) to upload:"
+          printf ' - %s\n' "${ASSETS[@]}"
+
+          gh release upload v1.0.0 "${ASSETS[@]}" --clobber --repo "$GITHUB_REPOSITORY"
