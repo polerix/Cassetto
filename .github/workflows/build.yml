@@ -79,19 +79,10 @@ jobs:
       contents: write
 
     steps:
-      - name: Download Windows Artifact
-        if: needs.build-windows.result == 'success'
+      - name: Download All Build Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: Cassetto-Windows-x64
-          path: release-files/windows
-
-      - name: Download macOS Artifact
-        if: needs.build-mac.result == 'success'
-        uses: actions/download-artifact@v4
-        with:
-          name: Cassetto-macOS-Universal
-          path: release-files/mac
+          path: release-files
 
       - name: Create or Update GitHub Release
         uses: softprops/action-gh-release@v2
@@ -116,8 +107,8 @@ jobs:
           prerelease: false
           fail_on_unmatched_files: false
           files: |
-            release-files/windows/*.exe
-            release-files/mac/*.dmg
-            release-files/mac/*.zip
+            release-files/**/*.exe
+            release-files/**/*.dmg
+            release-files/**/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
