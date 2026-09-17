@@ -51,7 +51,7 @@
         "zip"
       ],
       "icon": "assets/cassette.icns",
-      "identity": null,
+      "forceCodeSigning": false,
       "hardenedRuntime": false,
       "gatekeeperAssess": false
     },
