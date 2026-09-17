@@ -84,31 +84,36 @@ jobs:
         with:
           path: release-files
 
-      - name: Create or Update GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v1.0.0
-          target_commitish: ${{ github.sha }}
-          name: Cassetto v1.0.0 (Windows & macOS)
-          body: |
-            ## 📼 Cassetto Audio Recorder v1.0.0
-            High-Fidelity Uncompressed WAV Recording Suite for Windows & macOS.
+      - name: Inspect Downloaded Artifacts
+        run: ls -laR release-files
 
-            ### Downloads Included:
-            - **Windows Standalone Portable Executable**: `Cassetto.exe`
-            - **macOS Disk Image Installer**: `Cassetto.dmg`
-
-            ### Features:
-            - 5 Full Interface Themes (Classic Win95, Luxury Wood, 80s Cyberpunk, Hi-Fi Studio, Clear Skeleton)
-            - 16-Bit PCM 44.1kHz Stereo/Mono WAV Export
-            - Real-Time Dual Channel LED Peak VU Meter
-            - Spinning Cassette Tape Spool Visualizer
-          draft: false
-          prerelease: false
-          fail_on_unmatched_files: false
-          files: |
-            release-files/**/*.exe
-            release-files/**/*.dmg
-            release-files/**/*.zip
+      - name: Publish Release with GitHub CLI
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          FILES=$(find release-files -type f \( -name "*.exe" -o -name "*.dmg" -o -name "*.zip" \))
+          echo "Files to upload:"
+          echo "$FILES"
+
+          if ! gh release view v1.0.0 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create v1.0.0 \
+              --title "Cassetto v1.0.0 (Windows & macOS)" \
+              --notes "## 📼 Cassetto Audio Recorder v1.0.0
+          High-Fidelity Uncompressed WAV Recording Suite for Windows & macOS.
+
+          ### Downloads Included:
+          - **Windows Standalone Portable Executable**: \`Cassetto.exe\`
+          - **macOS Disk Image Installer**: \`Cassetto.dmg\`
+
+          ### Features:
+          - 5 Full Interface Themes (Classic Win95, Luxury Wood, 80s Cyberpunk, Hi-Fi Studio, Clear Skeleton)
+          - 16-Bit PCM 44.1kHz Stereo/Mono WAV Export
+          - Real-Time Dual Channel LED Peak VU Meter
+          - Spinning Cassette Tape Spool Visualizer" \
+              --repo "$GITHUB_REPOSITORY"
+          fi
+
+          for file in $FILES; do
+            echo "Uploading $file..."
+            gh release upload v1.0.0 "$file" --clobber --repo "$GITHUB_REPOSITORY"
+          done
