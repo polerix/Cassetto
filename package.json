@@ -5,7 +5,9 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --win"
+    "build": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:all": "electron-builder --win --mac"
   },
   "keywords": [
     "cassetto",
@@ -13,7 +15,9 @@
     "recorder",
     "wav",
     "portable",
-    "electron"
+    "electron",
+    "macos",
+    "mac"
   ],
   "author": "Cassetto",
   "license": "MIT",
@@ -41,7 +45,18 @@
       "requestExecutionLevel": "user"
     },
     "mac": {
-      "icon": "assets/cassette.icns"
+      "category": "public.app-category.music",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "assets/cassette.icns",
+      "identity": null,
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false
+    },
+    "dmg": {
+      "artifactName": "Cassetto.dmg"
     }
   }
 }

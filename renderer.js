@@ -530,14 +530,14 @@ document.addEventListener('DOMContentLoaded', () => {
   function promptDesktopDownload() {
     showModal(
       'Download Cassetto Desktop',
-      `<h3>Cassetto Portable Desktop Edition</h3>
-      <p>Download the standalone Windows executable for offline high-fidelity WAV recording without a browser.</p>
+      `<h3>Cassetto Desktop & Portable Edition</h3>
+      <p>Download the standalone desktop application for offline high-fidelity WAV recording without a browser.</p>
       <br>
-      <p>• 100% Offline Single Executable (.exe)</p>
-      <p>• Native File Dialogs & Windows Integration</p>
-      <p>• No Admin Privileges or Installation Required</p>
+      <p>• 100% Offline Standalone Application</p>
+      <p>• Cross-Platform Support for Windows & macOS</p>
+      <p>• Native File Dialogs & Real-Time Stereo VU Metering</p>
       <br>
-      <p><a href="https://github.com/polerix/Cassetto/releases/latest" target="_blank" style="color: inherit; font-weight: bold; text-decoration: underline;">📦 Download Portable Cassetto (.exe) from GitHub Releases</a></p>`
+      <p><a href="https://github.com/polerix/Cassetto/releases/latest" target="_blank" style="color: inherit; font-weight: bold; text-decoration: underline;">📦 Download for Windows (.exe) & macOS (.dmg) on GitHub Releases</a></p>`
     );
   }
 
@@ -548,6 +548,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     try {
       const result = await window.cassettoAPI.createDesktopShortcut();
+      if (result.isMac) {
+        showModal('macOS App', 'Running native Cassetto macOS application bundle.');
+        return;
+      }
       if (result.success) {
         updateShortcutStatus(true);
         showModal('Desktop Shortcut', 'Desktop shortcut created successfully!');
@@ -560,9 +564,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateShortcutStatus(exists) {
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
     if (!isElectron) {
       statusShortcut.textContent = '💻 Desktop App Available';
-      statusShortcut.title = 'Running in web mode. Click to download Desktop Portable Executable.';
+      statusShortcut.title = 'Running in web mode. Click to download Desktop App for Windows or macOS.';
+      return;
+    }
+    if (isMac) {
+      statusShortcut.textContent = '🍏 macOS App: Active';
+      statusShortcut.title = 'Cassetto macOS Desktop Application Bundle';
       return;
     }
     if (exists) {

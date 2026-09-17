@@ -1,10 +1,14 @@
-const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
 let mainWindow;
 
 function createWindow() {
+  const iconPath = process.platform === 'darwin'
+    ? path.join(__dirname, 'assets', 'cassette.icns')
+    : path.join(__dirname, 'assets', 'cassette.png');
+
   mainWindow = new BrowserWindow({
     width: 640,
     height: 520,
@@ -13,7 +17,7 @@ function createWindow() {
     frame: false, // Custom Win95 title bar
     transparent: false,
     backgroundColor: '#c0c0c0',
-    icon: path.join(__dirname, 'assets', 'cassette.png'),
+    icon: iconPath,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -31,6 +35,57 @@ function createWindow() {
   });
 }
 
+function setupMacMenu() {
+  if (process.platform !== 'darwin') return;
+
+  const template = [
+    {
+      label: 'Cassetto',
+      submenu: [
+        { role: 'about' },
+        { type: 'separator' },
+        { role: 'services' },
+        { type: 'separator' },
+        { role: 'hide' },
+        { role: 'hideOthers' },
+        { role: 'unhide' },
+        { type: 'separator' },
+        { role: 'quit' }
+      ]
+    },
+    {
+      label: 'File',
+      submenu: [
+        { role: 'close' }
+      ]
+    },
+    {
+      label: 'Edit',
+      submenu: [
+        { role: 'undo' },
+        { role: 'redo' },
+        { type: 'separator' },
+        { role: 'cut' },
+        { role: 'copy' },
+        { role: 'paste' },
+        { role: 'selectAll' }
+      ]
+    },
+    {
+      label: 'Window',
+      submenu: [
+        { role: 'minimize' },
+        { role: 'zoom' },
+        { type: 'separator' },
+        { role: 'front' }
+      ]
+    }
+  ];
+
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
+}
+
 // Ensure assets directory exists
 const assetsDir = path.join(__dirname, 'assets');
 if (!fs.existsSync(assetsDir)) {
@@ -38,6 +93,7 @@ if (!fs.existsSync(assetsDir)) {
 }
 
 app.whenReady().then(() => {
+  setupMacMenu();
   createWindow();
 
   // Auto-check / create desktop shortcut if allowed on startup
@@ -127,12 +183,16 @@ function getShortcutPath() {
 }
 
 function checkDesktopShortcut() {
+  if (process.platform === 'darwin') return true;
   const shortcutPath = getShortcutPath();
   if (!shortcutPath) return false;
   return fs.existsSync(shortcutPath);
 }
 
 function createDesktopShortcut() {
+  if (process.platform === 'darwin') {
+    return { success: true, message: 'macOS Application Bundle (.app)', isMac: true };
+  }
   try {
     const shortcutPath = getShortcutPath();
     if (!shortcutPath) return { success: false, message: 'Desktop folder not accessible.' };
