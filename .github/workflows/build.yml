@@ -81,10 +81,11 @@ jobs:
           if-no-files-found: warn
 
   release:
-    name: Publish GitHub Release (v1.0.0)
+    name: Publish GitHub Release
     needs: [build-windows, build-mac]
     runs-on: ubuntu-latest
-    if: always() && (needs.build-windows.result == 'success' || needs.build-mac.result == 'success') && github.event_name != 'pull_request'
+    # Only for version tags (git tag v1.1.0 && git push origin v1.1.0), and still publish if one platform failed.
+    if: always() && startsWith(github.ref, 'refs/tags/v') && (needs.build-windows.result == 'success' || needs.build-mac.result == 'success')
     permissions:
       contents: write
 
@@ -100,6 +101,7 @@ jobs:
       - name: Publish Release with GitHub CLI
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
         run: |
           set -e
           echo "Listing downloaded files in release-files:"
@@ -114,4 +116,10 @@ jobs:
           echo "Found ${#ASSETS[@]} asset(s) to upload:"
           printf ' - %s\n' "${ASSETS[@]}"
 
-          gh release upload v1.0.0 "${ASSETS[@]}" --clobber --repo "$GITHUB_REPOSITORY"
+          # The version comes from the pushed tag, never a hard-coded one.
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
+              --title "Cassetto $TAG (Windows & macOS)" \
+              --notes "Cassetto Audio Recorder $TAG: high-fidelity uncompressed WAV recording for Windows (Cassetto.exe) and macOS (Cassetto.dmg)."
+          fi
+          gh release upload "$TAG" "${ASSETS[@]}" --clobber --repo "$GITHUB_REPOSITORY"
