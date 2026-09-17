@@ -58,13 +58,9 @@ jobs:
 
       - name: Build macOS Package
         run: |
-          npx electron-builder --mac zip > build.log 2>&1 || true
-          echo "=== MAC BUILD LOG ==="
-          cat build.log
-          if ! ls dist/*.zip >/dev/null 2>&1; then
-            echo "::error::$(tail -n 20 build.log | tr '\n' ' ')"
-            exit 1
-          fi
+          set -e
+          echo "Building macOS Packages..."
+          npm run build:mac
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
