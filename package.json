@@ -1,0 +1,47 @@
+{
+  "name": "cassetto",
+  "version": "1.0.0",
+  "description": "Portable WAV Audio Recorder",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win"
+  },
+  "keywords": [
+    "cassetto",
+    "audio",
+    "recorder",
+    "wav",
+    "portable",
+    "electron"
+  ],
+  "author": "Cassetto",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^34.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.cassetto.recorder",
+    "productName": "Cassetto",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "executableName": "Cassetto",
+      "target": [
+        "portable",
+        "dir"
+      ],
+      "icon": "assets/cassette.ico",
+      "forceCodeSigning": false
+    },
+    "portable": {
+      "artifactName": "Cassetto.exe",
+      "requestExecutionLevel": "user"
+    },
+    "mac": {
+      "icon": "assets/cassette.icns"
+    }
+  }
+}

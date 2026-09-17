@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cassetto</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-wood">
+  <div class="win95-window">
+    <!-- Title Bar -->
+    <div class="title-bar">
+      <div class="title-bar-text">
+        <span class="app-icon">📼</span>
+        <span>Cassetto</span>
+      </div>
+      <div class="title-bar-controls">
+        <button id="btn-minimize" class="win95-btn-title" aria-label="Minimize">_</button>
+        <button id="btn-maximize" class="win95-btn-title" aria-label="Maximize">□</button>
+        <button id="btn-close" class="win95-btn-title btn-close" aria-label="Close">✕</button>
+      </div>
+    </div>
+
+    <!-- Menu Bar -->
+    <div class="menu-bar">
+      <div class="menu-item" id="menu-file">
+        <span>F</span>ile
+        <div class="dropdown-menu" id="dropdown-file">
+          <div class="menu-option" id="opt-save">💾 Save WAV As...</div>
+          <div class="menu-option" id="opt-open-folder">📁 Open Saved Folder</div>
+          <div class="menu-divider"></div>
+          <div class="menu-option" id="opt-exit">Exit</div>
+        </div>
+      </div>
+      <div class="menu-item" id="menu-options">
+        <span>O</span>ptions
+        <div class="dropdown-menu" id="dropdown-options">
+          <div class="menu-option" id="opt-create-shortcut">📌 Create Desktop Shortcut</div>
+          <div class="menu-divider"></div>
+          <div class="menu-option submenu-trigger" id="opt-audio-trigger">
+            <span>🎵 Audio Mode</span>
+            <span class="submenu-arrow">▶</span>
+            <div class="dropdown-submenu" id="dropdown-audio">
+              <div class="menu-option" id="opt-audio-stereo">✓ Stereo (2 Channel)</div>
+              <div class="menu-option" id="opt-audio-mono">  Mono (1 Channel)</div>
+            </div>
+          </div>
+          <div class="menu-option submenu-trigger" id="opt-theme-trigger">
+            <span>🎨 Theme</span>
+            <span class="submenu-arrow">▶</span>
+            <div class="dropdown-submenu" id="dropdown-theme">
+              <div class="menu-option" id="opt-theme-win95">  Classic Windows 95</div>
+              <div class="menu-option" id="opt-theme-wood">✓ Luxury Wood Veneer</div>
+              <div class="menu-option" id="opt-theme-cyberpunk">  80s Cyberpunk Neon</div>
+              <div class="menu-option" id="opt-theme-studio">  Hi-Fi Studio Metallic</div>
+              <div class="menu-option" id="opt-theme-skeleton">  Clear Skeleton Acrylic</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="menu-item" id="menu-help">
+        <span>H</span>elp
+        <div class="dropdown-menu" id="dropdown-help">
+          <div class="menu-option" id="opt-about">ℹ️ About Cassetto</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Window Content -->
+    <div class="window-body">
+
+      <!-- Top Row: Cassette Visualizer & LED Timer -->
+      <div class="panel-section sunken-panel cassette-deck">
+        <div class="cassette-tape">
+          <!-- Left Reel -->
+          <div class="spool-container">
+            <div class="spool" id="spool-left">
+              <div class="spool-teeth"></div>
+              <div class="spool-tape-fill" id="tape-fill-left"></div>
+            </div>
+          </div>
+          <!-- Tape Window Center -->
+          <div class="cassette-window">
+            <div class="tape-bridge"></div>
+            <div class="cassette-label-text">CASSETTO C-60</div>
+            <div class="tape-counter-lcd">
+              <span id="lcd-status" class="lcd-badge status-idle">READY</span>
+            </div>
+          </div>
+          <!-- Right Reel -->
+          <div class="spool-container">
+            <div class="spool" id="spool-right">
+              <div class="spool-teeth"></div>
+              <div class="spool-tape-fill" id="tape-fill-right"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 7-Segment Retro Timer Display -->
+        <div class="timer-display-container">
+          <div class="timer-label">LENGTH / POSITION</div>
+          <div class="lcd-display">
+            <span id="timer-display">00:00:00.0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Middle Row: Audio Source Selection -->
+      <div class="panel-section raised-panel device-selector-panel">
+        <label for="audio-input-select" class="win95-label">Audio Input Source:</label>
+        <select id="audio-input-select" class="win95-select">
+          <option value="default">Default Microphone / Line In</option>
+        </select>
+        <button id="btn-refresh-devices" class="win95-btn btn-small" title="Refresh Input Devices">🔄</button>
+      </div>
+
+      <!-- Level Meter Panel -->
+      <div class="panel-section sunken-panel vu-meter-panel">
+        <div class="vu-channel">
+          <span class="vu-label">L</span>
+          <div class="vu-bar-container" id="vu-bar-l">
+            <!-- LED segments dynamically generated in CSS/JS -->
+          </div>
+        </div>
+        <div class="vu-channel">
+          <span class="vu-label">R</span>
+          <div class="vu-bar-container" id="vu-bar-r">
+            <!-- LED segments dynamically generated in CSS/JS -->
+          </div>
+        </div>
+        <div class="vu-scale">
+          <span>-40</span>
+          <span>-20</span>
+          <span>-10</span>
+          <span>-6</span>
+          <span>-3</span>
+          <span>0 dB</span>
+        </div>
+      </div>
+
+      <!-- Tape Recorder Transport Controls -->
+      <div class="panel-section raised-panel transport-controls">
+        <button id="btn-record" class="win95-btn btn-transport btn-record" title="Record (R)">
+          <span class="icon-dot red-dot">●</span> Record
+        </button>
+        <button id="btn-pause" class="win95-btn btn-transport btn-pause" title="Pause (P)" disabled>
+          <span class="icon-pause yellow-pause">❚❚</span> Pause
+        </button>
+        <button id="btn-stop" class="win95-btn btn-transport btn-stop" title="Stop (S)" disabled>
+          <span class="icon-square blue-square">■</span> Stop
+        </button>
+        <button id="btn-play" class="win95-btn btn-transport btn-play" title="Playback Preview" disabled>
+          <span class="icon-play green-play">►</span> Play
+        </button>
+        <button id="btn-save" class="win95-btn btn-transport btn-save" title="Save WAV File" disabled>
+          <span class="icon-save">💾</span> Save WAV
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <div class="status-pane" id="status-text">Ready</div>
+      <div class="status-pane" id="status-format">44.1 kHz, 16-Bit PCM</div>
+      <div class="status-pane" id="status-shortcut" title="Desktop Shortcut Status">📌 Shortcut: Ready</div>
+    </div>
+  </div>
+
+  <!-- Win95 Modal Dialog (About / Alert) -->
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div class="win95-window modal-window">
+      <div class="title-bar">
+        <div class="title-bar-text" id="modal-title">About Cassetto</div>
+        <div class="title-bar-controls">
+          <button id="btn-modal-close" class="win95-btn-title btn-close">✕</button>
+        </div>
+      </div>
+      <div class="window-body modal-body">
+        <div class="modal-content-wrapper">
+          <div class="modal-icon">📼</div>
+          <div class="modal-text" id="modal-body-text">
+            <h3>Cassetto</h3>
+            <p>Version 1.0 (Portable Edition)</p>
+            <p>High-Fidelity WAV Recording Suite for Windows Workstations.</p>
+            <br>
+            <p><small>Supports uncompressed PCM WAV, real-time VU meter analysis, non-admin execution & auto-shortcut creation.</small></p>
+          </div>
+        </div>
+        <div class="modal-buttons">
+          <button id="btn-modal-ok" class="win95-btn btn-default">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
