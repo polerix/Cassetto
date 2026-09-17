@@ -51,6 +51,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const vuBarL = document.getElementById('vu-bar-l');
   const vuBarR = document.getElementById('vu-bar-r');
 
+  const isElectron = !!(window.cassettoAPI);
+
   // --- State Variables ---
   let audioContext = null;
   let mediaStream = null;
@@ -112,28 +114,38 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Audio Device Enumeration ---
   async function enumerateAudioDevices() {
     try {
-      // Prompt permissions if needed
-      await navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-        stream.getTracks().forEach(track => track.stop());
-      }).catch(() => {});
-
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const audioInputs = devices.filter(d => d.kind === 'audioinput');
-
-      audioInputSelect.innerHTML = '';
-      if (audioInputs.length === 0) {
+      if (!navigator.mediaDevices) {
         audioInputSelect.innerHTML = '<option value="">Default Microphone</option>';
         return;
       }
 
-      audioInputs.forEach((device, index) => {
-        const option = document.createElement('option');
-        option.value = device.deviceId;
-        option.textContent = device.label || `Microphone ${index + 1}`;
-        audioInputSelect.appendChild(option);
-      });
+      // Prompt permissions if needed
+      if (navigator.mediaDevices.getUserMedia) {
+        await navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+          stream.getTracks().forEach(track => track.stop());
+        }).catch(() => {});
+      }
+
+      if (navigator.mediaDevices.enumerateDevices) {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const audioInputs = devices.filter(d => d.kind === 'audioinput');
+
+        audioInputSelect.innerHTML = '';
+        if (audioInputs.length === 0) {
+          audioInputSelect.innerHTML = '<option value="">Default Microphone</option>';
+          return;
+        }
+
+        audioInputs.forEach((device, index) => {
+          const option = document.createElement('option');
+          option.value = device.deviceId;
+          option.textContent = device.label || `Microphone ${index + 1}`;
+          audioInputSelect.appendChild(option);
+        });
+      }
     } catch (err) {
       console.warn('Device enumeration warning:', err);
+      audioInputSelect.innerHTML = '<option value="">Default Microphone</option>';
     }
   }
 
@@ -507,8 +519,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key.toLowerCase() === 'p' && !btnPause.disabled) pauseRecording();
     if (e.key.toLowerCase() === 's' && !btnStop.disabled) stopRecording();
   });
-
-  const isElectron = !!(window.cassettoAPI);
 
   // --- Desktop Shortcut & Desktop App Download ---
   async function checkDesktopShortcutStatus() {
