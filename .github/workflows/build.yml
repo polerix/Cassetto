@@ -41,7 +41,7 @@ jobs:
 
   build-mac:
     name: Build macOS Release (.dmg & .zip)
-    runs-on: macos-latest
+    runs-on: macos-13
 
     steps:
       - name: Checkout Code
@@ -57,14 +57,20 @@ jobs:
         run: npm ci
 
       - name: Build macOS Package
-        run: npm run build:mac
+        run: |
+          npm run build:mac 2>&1 | tee mac-build.log
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
+          DEBUG: electron-builder
+
+      - name: Print Failure Log
+        if: failure()
+        run: cat mac-build.log
 
       - name: Upload macOS Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Cassetto-macOS-Universal
+          name: Cassetto-macOS-x64
           path: |
             dist/*.dmg
             dist/*.zip
