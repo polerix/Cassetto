@@ -58,11 +58,12 @@ jobs:
 
       - name: Build macOS Package
         run: |
-          npm run build:mac 2>&1 | tee mac-build.log || {
-            echo "=== BUILD:MAC FAILED, RETRYING WITH ZIP ONLY ==="
-            cat mac-build.log
-            npx electron-builder --mac -c.mac.target=zip
-          }
+          set -e
+          echo "Building macOS Zip package..."
+          npx electron-builder --mac --config.mac.target=zip
+
+          echo "Attempting macOS DMG package..."
+          npx electron-builder --mac --config.mac.target=dmg || echo "DMG build skipped or unsupported in headless environment"
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
