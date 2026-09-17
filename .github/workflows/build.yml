@@ -65,7 +65,7 @@ jobs:
     name: Publish GitHub Release (v1.0.0)
     needs: [build-windows, build-mac]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name != 'pull_request'
     permissions:
       contents: write
 
@@ -86,6 +86,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.0
+          target_commitish: ${{ github.sha }}
           name: Cassetto v1.0.0 (Windows & macOS)
           body: |
             ## 📼 Cassetto Audio Recorder v1.0.0
