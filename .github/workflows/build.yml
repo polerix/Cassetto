@@ -59,3 +59,51 @@ jobs:
         with:
           name: Cassetto-macOS-Universal
           path: dist/*.dmg
+
+  release:
+    name: Publish GitHub Release (v1.0.0)
+    needs: [build-windows, build-mac]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download Windows Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Cassetto-Windows-x64
+          path: release-files/windows
+
+      - name: Download macOS Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Cassetto-macOS-Universal
+          path: release-files/mac
+
+      - name: Create or Update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0
+          name: Cassetto v1.0.0 (Windows & macOS)
+          body: |
+            ## 📼 Cassetto Audio Recorder v1.0.0
+            High-Fidelity Uncompressed WAV Recording Suite for Windows & macOS.
+
+            ### Downloads Included:
+            - **Windows Desktop & Portable Executable**: `Cassetto.exe` / `Cassetto.zip`
+            - **macOS Application Package**: `Cassetto.dmg`
+
+            ### Features:
+            - 5 Full Interface Themes (Classic Win95, Luxury Wood, 80s Cyberpunk, Hi-Fi Studio, Clear Skeleton)
+            - 16-Bit PCM 44.1kHz Stereo/Mono WAV Export
+            - Real-Time Dual Channel LED Peak VU Meter
+            - Spinning Cassette Tape Spool Visualizer
+          draft: false
+          prerelease: false
+          files: |
+            release-files/windows/Cassetto.zip
+            release-files/windows/win-unpacked/Cassetto.exe
+            release-files/mac/*.dmg
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
